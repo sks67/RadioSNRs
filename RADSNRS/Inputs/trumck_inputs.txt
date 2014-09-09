@@ -1,0 +1,28 @@
+---------------------------------------------------------
+Input parameters for galaxies to the light curve model
+---------------------------------------------------------
+
+#Fits Filename
+LMC60.M0NHC3.FITS
+
+#Number of Radio SNRs
+     54.0
+
+#Gas Scale Height (in pc)
+     20.0
+  
+#Fraction (Ia/CC)
+     0.333 
+
+#Distance to Galaxy [Mpc]
+0.05
+
+#SNR Luminosity Filename [mJy]
+lmcradiolumscopy.txt
+
+#SNR Diameter Filename
+0 #[0] if arcsecs,[1] if parsecs
+lmc_angdiams.txt
+
+#SNR Ambient Densities Filename [cm^-2]
+lmc_snrs_opaccopy.txt
