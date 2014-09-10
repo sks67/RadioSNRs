@@ -31,46 +31,47 @@ h1_cc = np.loadtxt('trumck_cc_dens.txt')
 #-----------------------------------------------------------#
 
 #CCSN Masses picked based on high-end IMF.
-xmin = 2 #solar masses
-xmax = 30 #solar masses
-n=2.35
-norm = (1.0-n)/(xmax**(1.0-n) - xmin**(1.0-n))
-pdf_x = lambda x: norm*x**(-n)
+def superMasses():
+    xmin = 2 #solar masses
+    xmax = 30 #solar masses
+    n = 2.35
+    norm = (1.0 - n)/(xmax**(1.0 - n) - xmin**(1.0 - n))
+    pdf_x = lambda x: norm*x**(-n)
 
 #Check Normalization
-y,err = integ.quad(pdf_x,xmin,xmax)
-cdf_x = lambda x: integ.quad(pdf_x,xmin,x)
+    y,err = integ.quad(pdf_x, xmin, xmax)
+    cdf_x = lambda x: integ.quad(pdf_x, xmin, x)
 
 #Random Variables by interpolation
-x = np.linspace(xmin,xmax,5000)
-cdf_table = np.zeros_like(x)
-for i in range(x.size):
-    y,err = cdf_x(x[i])
-    cdf_table[i]=y
+    x = np.linspace(xmin, xmax, 5000)
+    cdf_table = np.zeros_like(x)
+    for i in range( x.size ):
+        y,err = cdf_x(x[i])
+        cdf_table[i]=y
 
-f = interp.interp1d(cdf_table,x)
-cdfnew = np.random.random(size=h1_cc.size)
-mass_cc = f(cdfnew)
+    f = interp.interp1d(cdf_table, x)
+    cdfnew = np.random.random(size = h1_cc.size)
+    mass_cc = f(cdfnew)
 
-#For Type Ia, Scalzo et al 2014 (Nearby SN Factory)
-mass_1a = np.random.uniform(0.9,1.4,size=h1_1a.size)
 
-rv = np.random.normal(loc=51.0,scale=0.28,size=(h1_1a.size+h1_cc.size)) 
-#0.4 variance ensures Hypernova, PISNs etc occur 1/1000 times "normal" CCSN (Janka 2012)
+    mass_1a = np.random.uniform(0.9, 1.4, size = h1_1a.size) #For Type Ia, Scalzo et al 2014 (Nearby SN Factory)
+    return (mass_cc, mass_1a)
 
-ek = 10**(rv-51.0)
+def superEnergies():
+    rv = np.random.normal(loc = 51.0, scale = 0.28, size = (h1_1a.size+h1_cc.size)) #0.4 variance ensures Hypernova, PISNs etc occur 1/1000 times "normal" CCSN (Janka 2012)
+    return 10**(rv-51.0)
 
 #-----------------------------------------------------------#
 #   MERGING SUBROUTINE FOR BIRTH TIMES AND H-DENSITY        #
 #-----------------------------------------------------------#
 
-def create_snarray(t_1a,t_cc):
-    t = np.concatenate([t_1a,t_cc])
+def create_snarray(t_1a, t_cc):
+    t = np.concatenate([t_1a, t_cc])
     m = np.concatenate([mass_1a[0:t_1a.size],mass_cc[0:t_cc.size]])
     h = np.concatenate([h1_1a[0:t_1a.size],h1_cc[0:t_cc.size]])
     n_1a = np.ones(t_1a.size)*7.0
     n_cc = np.ones(t_cc.size)*12.0
-    n = np.concatenate([n_1a,n_cc])
+    n = np.concatenate([n_1a, n_cc])
 
     args = np.argsort(t)
     t = t[args]
@@ -78,15 +79,14 @@ def create_snarray(t_1a,t_cc):
     m = m[args]
     sn_ek = ek[args]
     n = n[args]
-    return (t,h,m,ek,n)
+    return (t, h, m, ek, n)
 
 #-----------------------------------------------------------#
 #   POISSON PROCESS BIRTH TIME GENERATOR SUBROUTINE         #
 #-----------------------------------------------------------#
 
-tmax = 4.0e7
-
 def timegen(snrate):
+   tmax = 4.0e7
    time = []
    j = 0
    count = 0
