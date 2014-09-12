@@ -12,8 +12,11 @@ import astropy.io.fits as fits
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy import stats
 import scipy.interpolate as interp
-
+import scipy.integrate as integ
 import ConfigParser
+import random as rn
+
+
 Config = ConfigParser.ConfigParser()
 Config.read('config.ini')
 path_to_file = Config.get('InputFiles','path')
@@ -29,7 +32,7 @@ def cleandata(temp_data):
     temp_data2 = temp_data[~np.isnan(temp_data)]
     return temp_data2[temp_data2>0.]
 
-a = 1.4
+
 pc = 3.086e18 # in cm
 lmc_thick = 100*pc #according to http://adsabs.harvard.edu/cgi-bin/bib_query?1973MNRAS.163..163W
 
@@ -39,7 +42,7 @@ n,bins = np.histogram(r_harray,bins=6000,normed=True)
 
 #Getting the discrete pdf from combining Schmidt Kennicutt Law and LMC's HI distribution
 
-def ccsn_densities():
+def ccsn_densities(a):
     nh = r_harray/lmc_thick
     n_h_min = np.amin(nh)
     n_h_max = np.amax(nh)
@@ -48,10 +51,7 @@ def ccsn_densities():
     pdf_nh = norm*(n_h**a)*n
     norm_ccsn = 1.0/np.sum(pdf_nh*n_h)
     pdf_nh_act = norm_ccsn*pdf_nh
-    print 'pdf sum = ', np.sum(pdf_nh_act*n_h)
-
 #Normalizing the discrete pdf and generating random densities
-    print np.sum(pdf_nh_act*n_h)
     custm = stats.rv_discrete(name='custm',values=(n_h,pdf_nh_act*n_h))
     num_rvs = 1000000
     cdf_table = custm.cdf(n_h)
@@ -79,6 +79,77 @@ def densityplots(snia,sncc):
     plt.ylim(1,1.0e5)
     plt.xlim(1.0e18,1.0e23)
     plt.show()
+
+#-----------------------------------------------------------#                                                                                                                    
+#     SUPERNOVA EJECTA MASSES AND KINETIC ENERGIES          #                                                                                                                    
+#-----------------------------------------------------------#                                                                                                                   
+
+    #CCSN Masses picked based on high-end IMF.                                                                                                                                  
+def superMasses(h1_1a,h1_cc):
+    xmin = 2 #solar masses                                                                                                                                                        
+    xmax = 30 #solar masses                                                                                                                                                      
+    n = 2.35
+    norm = (1.0 - n)/(xmax**(1.0 - n) - xmin**(1.0 - n))
+    pdf_x = lambda x: norm*x**(-n)
+    #Check Normalization                                                                                                                                                         
+    y,err = integ.quad(pdf_x, xmin, xmax)
+    cdf_x = lambda x: integ.quad(pdf_x, xmin, x) 
+    #Random Variables by interpolation                                                                                                                                           
+    x = np.linspace(xmin, xmax, 5000)
+    cdf_table = np.zeros_like(x)
+    for i in range( x.size ):
+        y,err = cdf_x(x[i])
+        cdf_table[i]=y
+
+    f = interp.interp1d(cdf_table, x)
+    cdfnew = np.random.random(size = h1_cc.size)
+    mass_cc = f(cdfnew)
+    mass_1a = np.random.uniform(0.9, 1.4, size = h1_1a.size) #For Type Ia, Scalzo et al 2014 (Nearby SN Factory)                                                               
+    return (mass_cc, mass_1a)
+
+def superEnergies(h1_1a,h1_cc):
+    rv = np.random.normal(loc = 51.0, scale = 0.28, size = (h1_1a.size+h1_cc.size)) #0.4 variance ensures Hypernova, PISNs etc occur 1/1000 times "normal" CCSN (Janka 2012)     
+    return 10**(rv-51.0)
+
+#-----------------------------------------------------------#                                                                                                                     
+#   MERGING SUBROUTINE FOR BIRTH TIMES AND H-DENSITY        #                                                                                                                    
+#-----------------------------------------------------------#                                                                                                                    
+def create_snarray(t_1a, t_cc,mass_1a,mass_cc,h1_1a,h1_cc,ek):
+    t = np.concatenate([t_1a, t_cc])
+    m = np.concatenate([mass_1a[0:t_1a.size],mass_cc[0:t_cc.size]])
+    h = np.concatenate([h1_1a[0:t_1a.size],h1_cc[0:t_cc.size]])
+    n_1a = np.ones(t_1a.size)*7.0
+    n_cc = np.ones(t_cc.size)*12.0
+    n = np.concatenate([n_1a, n_cc])
+
+    args = np.argsort(t)
+    t = t[args]
+    h = h[args]
+    m = m[args]
+    sn_ek = ek[args]
+    n = n[args]
+    return (t, h, m, ek, n)
+
+#-----------------------------------------------------------#                                                                                                                    
+#   POISSON PROCESS BIRTH TIME GENERATOR SUBROUTINE         #                                                                                                                  
+#-----------------------------------------------------------#                                                                                                                    
+
+def timegen(snrate):
+   tmax = 4.0e7
+   time = []
+   j = 0
+   count = 0
+   for i in xrange(int(tmax)):
+       prob = rn.random()
+       if prob > snrate:
+           continue
+       else:
+           count=count+1
+           time.append(i)
+           j=j+1
+
+   return np.array(time)
+
 
 #np.savetxt('trumck_cc_dens.txt',ccsn_densities())
 #np.savetxt('trumck_ia_dens.txt',type1a_densities())

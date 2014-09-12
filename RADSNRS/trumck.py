@@ -53,7 +53,7 @@ def randomnh(rho_col,z0):
 
 def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
     #thick_lim = 5*(lmcthick/pc)*0.5
-    tsnap_array = np.linspace(2.0,3.0,50)*1.0e6
+    tsnap_array = np.array([3.0e6])
     histlum_array = np.zeros((tsnap_array.size,1000))
     k_pval = np.zeros(tsnap_array.size)
     mwu_pval = np.zeros_like(k_pval)
@@ -175,7 +175,7 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
 
 #Saving stuff to the IpythonStuff folder for analysis    
     userdoc = os.path.join(os.getcwd(),'DataAnalysis')    
-    np.savetxt(os.path.join(userdoc,'paramtst_lumhist2.txt'),histlum_array)
+    np.savetxt(os.path.join(userdoc,'paramtst_lumhist.txt'),histlum_array)
     
         
 #CALCULATE N(OBS) AND N(MODEL) PER BIN
@@ -192,7 +192,7 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
 
         
 #CALCULATING LIKELIHOOD
-    avg_n = np.mean(n2,axis=0)
+    avg_n = np.mean(n2,axis=0)/10.0
     likhood_temp = np.array([poissonProb(n[ind],avg_n[ind]) for ind in range(n.size)])
     likhood = np.prod(likhood_temp)
     return likhood
