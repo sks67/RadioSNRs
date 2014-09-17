@@ -14,17 +14,22 @@ import datetime as dt
 import os
 
 
-a = np.array([1.25,1.5])
-thick_array = np.array([50])
-frac_array = np.array([0.3])
-ratelmc = np.array([3.0e-2,4.0e-2])
+a = np.array([0.5,0.75,1.0,1.25,1.5])
+thick_array = np.array([10,30,50,70,90])
+frac_array = np.array([0.1,0.3,0.5,0.7,0.9])
+ratelmc = np.array([1.0,2.0,3.0,4.0,5.0])*1.0e-3*20
+#a = np.array([0.5,0.75])
+#thick_array = np.array([10,30])
+#frac_array = np.array([0.1,0.3])
+#ratelmc = np.array([1.0,2.0])*1.0e-3*20
+
+likelihood = np.zeros(thick_array.size*frac_array.size*ratelmc.size*a.size)
 delta_rate = 0.25
-#delta_a = a[1]-a[0]
+delta_a = 0.25
+xx=0
 for j in range(thick_array.size):
     for i in range(frac_array.size):
 
-        xx=0
-        likelihood = np.zeros(ratelmc.size*a.size)
         #start = tm.time()
         frac = frac_array[i]
         for rate_ind,rate_elem in enumerate(ratelmc):
@@ -39,16 +44,19 @@ for j in range(thick_array.size):
                 h1_cc = dgen.ccsn_densities(a_elem)
                 mass_cc,mass_1a = dgen.superMasses(h1_1a,h1_cc)
                 ek = dgen.superEnergies(h1_1a,h1_cc)
+                #print 'h1_1a.size = ',h1_1a.size
+                #print 'h1_cc.size = ',h1_cc.size
+                #print 'time_1a.size = ',time_1a.size
+                #print 'time_cc.size = ',time_cc.size
                 time,h1,ejmas,energ,nprof = dgen.create_snarray(time_1a,time_cc,mass_1a,mass_cc,h1_1a,h1_cc,ek)
                 likelihood[xx] = trumck.radiolightcurve(thick_array[j],h1,time,ejmas,energ,nprof)
-                print a_elem,'\t',rate_elem,'\t',likelihood[xx]
+                print thick_array[j],'\t',frac,'\t',rate_elem,'\t',a_elem,'\t',likelihood[xx]
                 xx=xx+1
-
-        print np.sum(likelihood)
+                
         
 
-#userdoc = os.path.join(os.getcwd(),'DataAnalysis')                                                                                                      
-#np.savetxt(os.path.join(userdoc,'checksnaps_easier_likelihood.txt'),likelihood)
-#np.savetxt(os.path.join(userdoc,'checksnaps_easier_thickness.txt'),thick_array)
-#np.savetxt(os.path.join(userdoc,'checksnaps_easier_fraction.txt'),frac_array)
-#np.savetxt(os.path.join(userdoc,'checksnaps_easier_snrate.txt'),ratelmc)
+userdoc = os.path.join(os.getcwd(),'DataAnalysis')                                                                                                      
+np.savetxt(os.path.join(userdoc,'checksnaps_easier_likelihood.txt'),likelihood)
+np.savetxt(os.path.join(userdoc,'checksnaps_easier_thickness.txt'),thick_array)
+np.savetxt(os.path.join(userdoc,'checksnaps_easier_fraction.txt'),frac_array)
+np.savetxt(os.path.join(userdoc,'checksnaps_easier_snrate.txt'),ratelmc)

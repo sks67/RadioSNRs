@@ -53,7 +53,7 @@ def randomnh(rho_col,z0):
 
 def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
     #thick_lim = 5*(lmcthick/pc)*0.5
-    tsnap_array = np.logspace(3.0,8.0,1000)
+    tsnap_array = np.logspace(3.0,7.0,500)
     histlum_array = np.zeros_like(tsnap_array)
     nsnrs = np.zeros(tsnap_array.size)
     
@@ -161,7 +161,7 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
 
         histlum = lum[np.nonzero(lum)]
         nsnrs[xx]=histlum.size
-        if xx%500==0:
+        if xx%10==0:
             print tsnap,'\t',nsnrs[xx] 
 #-------------------------------------------------------------------#                                                                                     
 
