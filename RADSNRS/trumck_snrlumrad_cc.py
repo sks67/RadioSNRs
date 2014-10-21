@@ -13,9 +13,9 @@ import sys
 
 #random locations of densities and times for snrate = 2.0e3
 lmcthick = 3.086e20 #gas thickness according to MB10.
-e51_array = np.array([0.5,1.0,1.5,2.0])
-colors = ['r','b','g','k']
-for e51 in e51_array:
+delt_array = np.array([(9.68e-24,8.10e-41),(7.52e-24,7.97e-41)])
+colors = ['r','k']#,'b']
+for ind,consts in enumerate(delt_array):
 #mass = np.array([1.4,5.0,10.0,15.0])
     lum = np.zeros(800) #800 is the size of lluni2 for the sedov taylor phases
     tim = np.zeros(800) #800 is the size of lluni2 for the sedov taylor phases
@@ -27,10 +27,13 @@ for e51 in e51_array:
     lluni2 = np.zeros(nt2)
     mu=1.4
     nh = 1.0
-    n0 = 1.0 #dimensionless, multiplied by 1cm^3
+    #n0 = 1.0 #dimensionless, multiplied by 1cm^3
     mp = 1.67e-24
+    n0=1.0
     ismrho = n0*mu*mp #in units of cm^-3
-    mej = 12.0 #in units of solar masses
+    e51=1.0
+    mej = 12.0
+   
 
 #Characteristic scales
     tch = 423*e51*(mej**(5.0/6.0))*(n0**(-1.0/3.0)) #years
@@ -43,7 +46,7 @@ for e51 in e51_array:
     t_st0 = tstar_st*tch
     t_ed = np.logspace(0.1,np.log10(t_st0),1000)
     tstar_ed = t_ed/tch
-    vstar_ed = 0.593*tstar_ed**(-(3.0/7.0))
+    vstar_ed = 0.593*tstar_ed**((-3.0/7.0))
     rstar_ed = 1.038*tstar_ed**(4.0/7.0)
     v_ed = vstar_ed*vch  #in km/s                                                                                                                                             
     r_ed = rstar_ed*rch  #in par                                                                                                                                            
@@ -60,14 +63,14 @@ for e51 in e51_array:
     epsb = 0.01
     alpha = 1.0 
     epse = epsb*alpha
-    pp = 3.0
+    pp = 2.5
     compf = 4.0
     ff = 0.38
     rho0 = ismrho/((1.0e-24)*mu*1.67)
     nei = 1.14
     cl = 6.27e18
-    c5 = 7.52e-24
-    c6 = 7.97e-41
+    c5 = consts[0]
+    c6 = consts[1]
     dist = 50*1000*3.086e18
     nu = 1.4e9
 
@@ -148,32 +151,32 @@ for e51 in e51_array:
     print r_ed[-1],r_st[0]
     rad=np.concatenate([r_ed,r_st])
 
-    np.savetxt('trumck_snrlumrad_cc_tim.txt',tim)
-    np.savetxt('trumck_snrlumrad_cc_lum.txt',lum)
-    np.savetxt('trumck_snrlumrad_cc_rad.txt',rad)
-    np.savetxt('trumck_snrlumrad_cc_ted.txt',t_ed)
-    np.savetxt('trumck_snrlumrad_cc_ved.txt',v_ed)
-    np.savetxt('trumck_snrlumrad_cc_tst.txt',10**t_st)
-    np.savetxt('trumck_snrlumrad_cc_vst.txt',v_st)
+  #  np.savetxt('trumck_snrlumrad_cc_tim.txt',tim)
+  #  np.savetxt('trumck_snrlumrad_cc_lum.txt',lum)
+  #  np.savetxt('trumck_snrlumrad_cc_rad.txt',rad)
+   # np.savetxt('trumck_snrlumrad_cc_ted.txt',t_ed)
+   # np.savetxt('trumck_snrlumrad_cc_ved.txt',v_ed)
+    #np.savetxt('trumck_snrlumrad_cc_tst.txt',10**t_st)
+    #np.savetxt('trumck_snrlumrad_cc_vst.txt',v_st)
     
     fig = py.figure(1)
     ax = fig.add_subplot(111)
-    ax.plot(tim,lum,'r-',lw=1.5)
-    ax.axvline(t_st0,linestyle='--',lw=1.5)
+    ax.plot(tim,lum,colors[ind],lw=1.5)#,label=r'$\gamma = {}$'.format(str(delt_array[ind])))
+   # ax.axvline(t_st0,linestyle='--',lw=1.5)
     ax.set_xscale('log')
     ax.set_yscale('log')
     ax.set_xlabel(r't [years]',fontsize='18')
     ax.set_ylabel(r'1.4 GHz Luminosity (ergs/s/Hz)',fontsize='18')
-    ax.set_title('Mej = {}, n = {}, e51 = {}'.format(mej,nh,e51))
+    #ax.set_title('Mej = {}, n = {}, e51 = {}'.format(mej,nh,e51))
     ax.set_xlim(100,1.0e6)
-    ax.set_ylim(1.0e19,1.0e26)
-#ax.axis([10.0,1.0e5,1.0e18,1.0e24])
+    ax.set_ylim(1.0e21,1.0e26)
     ax.legend()
+    py.savefig('gammas.png')
     
     fig2 = py.figure(2)
     ax2 = fig2.add_subplot(111)
     ax2.axvline(t_st0,linestyle='--',lw=1.5)
-    ax2.plot(tim,rad,'r-',lw=1.5)
+    ax2.plot(tim,rad,colors[ind],lw=1.5)#,label=r'$E = {}$'.format(str(delt_array[ind])))
     ax2.set_xscale('log')
     ax2.set_yscale('log')
     ax2.set_xlabel(r't [years]',fontsize='18')

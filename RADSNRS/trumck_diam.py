@@ -1,10 +1,9 @@
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-# Same as trumck_checksnaps_easier.py, except here I attempt 
-# several optimization methods.
-#
-# NOTE: If program works, delete trumck_checksnaps_easier.py 
+#  NOTE: IF PROGRAM WORKS, DELETE trumck_diam.py
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+
 import os
 import datetime as dt
 import numpy as np
@@ -22,16 +21,14 @@ nlmc = Config.getint('ObsParameters','numberofsnrs')
 dist = Config.getfloat('ObsParameters','distance')   #Mpc
 path_to_file =  Config.get('InputFiles','path') 
 diamfile = Config.get('InputFiles','size')
-lmcdiams = np.loadtxt(path_to_file+diamfile)  #arcsecs
-diam = ((lmcdiams*mt.pi)/(180.0*3600.0))*dist*(1.0e6)
- 
-
-pc = 3.086e18  #cm
+diam = np.loadtxt(path_to_file+diamfile)  #arcsecs                                                                                                     
+lmcdiams = ((diam*mt.pi)/(180.0*3600.0))*dist*(1.0e6) #pc
 
 
+pc = 3.086e18
 
-#---------------------------------------------------------------#                                                                                         
-#------------PICKING RANDOM NH IN A COLUMN DENSITY--------------#                                                                                       
+#---------------------------------------------------------------#                                                                                      
+#------------PICKING RANDOM NH IN A COLUMN DENSITY--------------#                                                                                      
 #---------------------------------------------------------------#                                                                                                                  
 def poissonProb(j,n):
     return (np.exp(-n)*(n**j))/mt.factorial(j)
@@ -50,42 +47,37 @@ def randomnh(rho_col,z0):
     n_z = (rho_col/(pc*z0*np.sqrt(3.14)))*np.exp(-(z**2)/(z0**2))
     return n_z
 
-def radiolightcurve(lmcthick,nh,tborn,ejmas,nprof):
+def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
     #thick_lim = 5*(lmcthick/pc)*0.5
-    tsnap_array = np.linspace(1.0,1.8,50)*1.0e6
-    histlum_array = np.zeros((tsnap_array.size,500))
-    histdens_array = np.zeros_like(histlum_array)
-    k_pval = np.zeros(tsnap_array.size)
-    mwu_pval = np.zeros_like(k_pval)
-    t_pval = np.zeros_like(k_pval)
+    tsnap_array = np.array([2.0e6])#np.linspace(1.8,2.4,30)*1.0e6
+    diam_array = np.zeros((tsnap_array.size,6000))
     nsnrs = np.zeros(tsnap_array.size)
     
 #Declaring constants for Luminosity Calculation
     epsb = 0.01
     alpha = 1.0 
     epse = epsb*alpha
-    pp = 3.0
+    pp = 2.5
     compf = 4.0
     ff = 0.38
     nei = 1.14
     cl = 6.27e18
-    c5 = 7.52e-24
-    c6 = 7.97e-41
+    c5 = 9.68e-24
+    c6 = 8.10e-41
     dist = 50*1000*3.086e18
     nu = 1.4e9
     
 
     for xx in range(tsnap_array.size):
         tsnap = tsnap_array[xx] #years
-#---------------------------------------------------------------#                                                                                                                  
-#---------------------------------------------------------------#                                                                                                                  
+#---------------------------------------------------------------#                                                                                     
+#---------------------------------------------------------------#                                                                                       
 #---------------------------------------------------------------#   
 
 #random locations of densities and times for snrate = 2.0e3
                
-        lum = np.zeros(nh.size) #800 is the size of lluni2 for the sedov taylor phases
+        rad = np.zeros(nh.size)
         tim = np.zeros(tborn.size) #800 is the size of lluni2 for the sedov taylor phases
-        dens = np.zeros(nh.size)
         for i in range(nh.size):
             if tborn[i]>tsnap:
                 break
@@ -95,12 +87,12 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,nprof):
             n0 = randomnh(nh[i],lmcthick) #dimensionless, multiplied by 1cm^3
             mp = 1.67e-24
             ismrho = n0*mu*mp #in units of cm^-3
-            e51 = 1.0 #in units of 10^51 ergs of energy released per sne
+            e51 = energ[i] #in units of 10^51 ergs of energy released per sne
             mej = ejmas[i] #in units of solar masses
             if n0==0.0:
                 print n0, nh[i]
 #Characteristic scales
-            tch = 423*e51*(mej**(5.0/6.0))*(n0**(-1.0/3.0)) #years
+            tch = 423*(e51**(-0.5))*(mej**(5.0/6.0))*(n0**(-1.0/3.0)) #years
             rch = 3.07*(mej**(1.0/3.0))*(n0**(-1.0/3.0)) #pcs
             vch = 7090*(e51**0.5)*(mej**(-0.5)) #km/s
                 
@@ -130,19 +122,15 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,nprof):
 
             vrad = 200.
             if (v_ed<=vrad):
-                lum[i]=0.0
                 tim[i]=t_ed
+                rad[i]=0.0
                 continue
+        
+            tim[i]=t_ed
+            rad[i]=r_ed
 
-            if (r_ed<=200):
-                lum[i]=r_ed
-                tim[i]=t_ed
-                dens[i]=nh[i]
-                
-        histlum = lum[np.nonzero(lum)]
-        histlum_array[xx,0:histlum.size]=histlum   #diameters
-        histdens = dens[np.nonzero(dens)]
-        histdens_array[xx,0:histdens.size]=histdens  #h1 densities
+        histrad = rad[np.nonzero(rad)]
+        diam_array[xx,0:histrad.size]=2.0*histrad
 #-------------------------------------------------------------------#                                                                                     
 
       
@@ -152,28 +140,25 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,nprof):
 #-------------------------------------------------------------------#
 
 
-#Saving stuff to the IpythonStuff folder for analysis 
-   # choice = int(raw_input('Save histogram data for Ipython Analysis? (1 - yes| 0 - no) : '))
-   # if choice==1:
+#Saving stuff to the IpythonStuff folder for analysis    
     userdoc = os.path.join(os.getcwd(),'DataAnalysis')    
-    np.savetxt(os.path.join(userdoc,'paramtst_diamhist.txt'),histlum_array)
-    np.savetxt(os.path.join(userdoc,'paramtst_denshist.txt'),histdens_array)
-    
+    np.savetxt(os.path.join(userdoc,'paramtst_diamhist.txt'),diam_array)
         
 #CALCULATE N(OBS) AND N(MODEL) PER BIN
-   # choice = int(raw_input('Likelihood Analysis? (1 - yes| 0 - no) : '))
-   # if choice==1:
-    l_cutoff = 0.1 #ergs/s/Hz
-    histlum_array = 2*histlum_array #Converting radius into diameter. stupid, i know..
-    obs_bins = np.linspace(0,diam.max(),6)
-    n,bins =np.histogram(diam,bins=obs_bins)
-    n2 = np.zeros((histlum_array.shape[0],obs_bins.size-1))
-    for ind,lums in enumerate(histlum_array):
+    
+    diam_cutoff = lmcdiams.max() #pc
+
+    obs_bins = np.linspace(0,diam_cutoff,6)
+    n,bins =np.histogram(lmcdiams,bins=obs_bins)
+    n2 = np.zeros((diam_array.shape[0],obs_bins.size-1))
+    for ind,lums in enumerate(diam_array):
         lums = lums[np.nonzero(lums)]
         n2[ind], bins2 = np.histogram(lums,bins=obs_bins)
+    
+
         
 #CALCULATING LIKELIHOOD
-    avg_n = np.array([np.mean(col) for col in np.transpose(n2)])
+    avg_n = np.mean(n2,axis=0)/15.0
     likhood_temp = np.array([poissonProb(n[ind],avg_n[ind]) for ind in range(n.size)])
     likhood = np.prod(likhood_temp)
     return likhood

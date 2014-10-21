@@ -1,3 +1,4 @@
+
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 # Same as trumck_checksnaps_easier.py, except here I attempt 
 # several optimization methods.
@@ -53,8 +54,11 @@ def randomnh(rho_col,z0):
 
 def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
     #thick_lim = 5*(lmcthick/pc)*0.5
-    tsnap_array = np.array([3.0e6])
-    histlum_array = np.zeros((tsnap_array.size,3000))
+    tsnap_array = np.array([2.0e6])
+    histlum_array = np.zeros((tsnap_array.size,6000))
+    diam_array = np.zeros_like(histlum_array)
+    dens_array = np.zeros_like(histlum_array)
+    prof_array = np.zeros_like(histlum_array)
     k_pval = np.zeros(tsnap_array.size)
     mwu_pval = np.zeros_like(k_pval)
     t_pval = np.zeros_like(k_pval)
@@ -64,13 +68,13 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
     epsb = 0.01
     alpha = 1.0 
     epse = epsb*alpha
-    pp = 3.0
+    pp = 2.5
     compf = 4.0
     ff = 0.38
     nei = 1.14
     cl = 6.27e18
-    c5 = 7.52e-24
-    c6 = 7.97e-41
+    c5 = 9.68e-24
+    c6 = 8.10e-41
     dist = 50*1000*3.086e18
     nu = 1.4e9
     
@@ -84,7 +88,10 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
 #random locations of densities and times for snrate = 2.0e3
                
         lum = np.zeros(nh.size) #800 is the size of lluni2 for the sedov taylor phases
+        rad = np.zeros_like(lum)
+        dens = np.zeros_like(lum)
         tim = np.zeros(tborn.size) #800 is the size of lluni2 for the sedov taylor phases
+        prof = np.zeros_like(lum)
         for i in range(nh.size):
             if tborn[i]>tsnap:
                 break
@@ -99,7 +106,7 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
             if n0==0.0:
                 print n0, nh[i]
 #Characteristic scales
-            tch = 423*e51*(mej**(5.0/6.0))*(n0**(-1.0/3.0)) #years
+            tch = 423*(e51**(-0.5))*(mej**(5.0/6.0))*(n0**(-1.0/3.0)) #years
             rch = 3.07*(mej**(1.0/3.0))*(n0**(-1.0/3.0)) #pcs
             vch = 7090*(e51**0.5)*(mej**(-0.5)) #km/s
                 
@@ -131,6 +138,8 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
             if (v_ed<=vrad):
                 lum[i]=0.0
                 tim[i]=t_ed
+                rad[i]=0.0
+                dens[i]=0.0
                 continue
 #----------------------------------------------------------------------------------------------#                                                                                    #-------------------------------ED STAGE LUMINOSITY AND RADIUS---------------------------------#                        
 #----------------------------------------------------------------------------------------------#                                                                                    
@@ -153,17 +162,30 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
             ss11 = (4.0/3.0)*ff*rr1
             nu11 = 2.0*cl*((ss11*c6*n0)**(2.0/(pp+4.0)))*(bb1**((pp+2.0)/(pp+4.0)))
             ss1 = (c5/c6)*(bb1**(-0.5))*((nu11/(2.0*cl))**2.5)
-            jj1 = ((nu/nu11)**2.5)*(1.0-np.exp(-1.0*(nu/nu11)**(-1.0*(pp+4.0)/2.0)))
+            #jj1 = ((nu/nu11)**2.5)*(1.0-np.exp(-1.0*(nu/nu11)**(-1.0*(pp+4.0)/2.0)))
+            jj1 = ((nu/nu11)**2.5)*((nu/nu11)**(-1.0*(pp+4.0)/2.0))
             f_nu1 = (ss1*jj1*mt.pi*rr1**2)/(1.0e-26*dist**2)
             lluni = f_nu1*1.0e-26*4.0*mt.pi*dist**2
             if (lluni<=9.0e22):
                 lluni=0.0
+                r_ed=0.0
+                nh[i]=0.0
+                nprof[i] = 0.0
         
             lum[i]=lluni
             tim[i]=t_ed
+            rad[i]=r_ed
+            dens[i]=nh[i]
+            prof[i]=nprof[i]
 
         histlum = lum[np.nonzero(lum)]
+        histrad = rad[np.nonzero(rad)]
+        histdens = dens[np.nonzero(dens)]
+        histprof = prof[np.nonzero(prof)]
         histlum_array[xx,0:histlum.size]=histlum
+        diam_array[xx,0:histrad.size]=2.0*histrad
+        dens_array[xx,0:histdens.size]=histdens
+        prof_array[xx,0:histprof.size]=histprof
 #-------------------------------------------------------------------#                                                                                     
 
       
@@ -176,7 +198,9 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
 #Saving stuff to the IpythonStuff folder for analysis    
     userdoc = os.path.join(os.getcwd(),'DataAnalysis')    
     np.savetxt(os.path.join(userdoc,'paramtst_lumhist.txt'),histlum_array)
-    
+    np.savetxt(os.path.join(userdoc,'paramtst_diamhist.txt'),diam_array)
+    np.savetxt(os.path.join(userdoc,'paramtst_denshist.txt'),dens_array)
+    np.savetxt(os.path.join(userdoc,'paramtst_profhist.txt'),prof_array)
         
 #CALCULATE N(OBS) AND N(MODEL) PER BIN
     
@@ -192,7 +216,7 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
 
         
 #CALCULATING LIKELIHOOD
-    avg_n = np.mean(n2,axis=0)/20.0
+    avg_n = np.mean(n2,axis=0)/15.0
     likhood_temp = np.array([poissonProb(n[ind],avg_n[ind]) for ind in range(n.size)])
     likhood = np.prod(likhood_temp)
     return likhood

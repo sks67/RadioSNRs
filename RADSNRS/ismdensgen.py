@@ -47,7 +47,7 @@ def ccsn_densities(a):
     pdf_nh_act = norm_ccsn*pdf_nh
 #Normalizing the discrete pdf and generating random densities
     custm = stats.rv_discrete(name='custm',values=(n_h,pdf_nh_act*n_h))
-    num_rvs = 2000000
+    num_rvs = 5000000
     cdf_table = custm.cdf(n_h)
     prob_rand = np.random.random(num_rvs)
     f = interp.interp1d(cdf_table,n_h)
@@ -57,7 +57,7 @@ def ccsn_densities(a):
 def type1a_densities():
     bin_vals = bins[1:] - bins[:-1]
     custm = stats.rv_discrete(name = 'custm', values = (bins[1:], n*bin_vals))
-    num_rvs = 2000000
+    num_rvs = 5000000
     cdf_table = custm.cdf(bins)
     prob_rand = np.random.random(num_rvs)
     f = interp.interp1d(cdf_table, bins)
@@ -80,26 +80,9 @@ def densityplots(snia,sncc):
 
     #CCSN Masses picked based on high-end IMF.                                                                                                          
 def superMasses(h1_1a,h1_cc):
-    xmin = 2 #solar masses                                                                                                                                                        
-    xmax = 30 #solar masses                                                                                                                                                      
-    n = 2.35
-    norm = (1.0 - n)/(xmax**(1.0 - n) - xmin**(1.0 - n))
-    pdf_x = lambda x: norm*x**(-n)
-    #Check Normalization                                                                                                                                                         
-    y,err = integ.quad(pdf_x, xmin, xmax)
-    cdf_x = lambda x: integ.quad(pdf_x, xmin, x) 
-    #Random Variables by interpolation                                                                                                                   
-    x = np.linspace(xmin, xmax, 5000)
-    cdf_table = np.zeros_like(x)
-    for i in range( x.size ):
-        y,err = cdf_x(x[i])
-        cdf_table[i]=y
-
-    f = interp.interp1d(cdf_table, x)
-    cdfnew = np.random.random(size = h1_cc.size)
-    mass_cc = f(cdfnew)
-    mass_1a = np.random.uniform(0.9, 1.4, size = h1_1a.size) #For Type Ia, Scalzo et al 2014 (Nearby SN Factory)                                         
-    return (mass_cc, mass_1a)
+    mass_cc = np.ones(h1_cc.size)*12.0
+    mass_1a = np.ones(h1_1a.size)*1.4
+    return (mass_cc,mass_1a)
 
 def superEnergies(h1_1a,h1_cc):
     rv = np.random.normal(loc = 51.0, scale = 0.3, size = (h1_1a.size+h1_cc.size)) #0.4 variance ensures Hypernova, PISNs etc occur 1/1000 times "normal" CCSN (Janka 2012)     
@@ -130,20 +113,10 @@ def create_snarray(t_1a, t_cc,mass_1a,mass_cc,h1_1a,h1_cc,ek):
 #-----------------------------------------------------------#                                                                                           
 
 def timegen(snrate):
-   tmax = 1.0e7
-   time = []
-   j = 0
-   count = 0
-   for i in xrange(int(tmax)):
-       prob = rn.random()
-       if prob > snrate:
-           continue
-       else:
-           count=count+1
-           time.append(i)
-           j=j+1
-
-   return np.array(time)
+   t = np.arange(1.0e7)
+   prob = np.random.rand(t.size)
+   return t[np.where(prob<=snrate)]
+   
 
 
 #np.savetxt('trumck_cc_dens.txt',ccsn_densities())

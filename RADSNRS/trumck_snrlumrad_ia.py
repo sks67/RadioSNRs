@@ -27,7 +27,7 @@ mu=1.4
 n0 = 1.0 #dimensionless, multiplied by 1cm^3
 mp = 1.67e-24
 ismrho = n0*mu*mp #in units of cm^-3
-e51 = 2.0 #in units of 10^51 ergs of energy released per sne
+e51 = 1.0 #in units of 10^51 ergs of energy released per sne
 mej = 1.4 #in units of solar masses
 
 #Characteristic scales
@@ -45,7 +45,7 @@ t_st0 = tstar_st*tch
 #--------------------EJECTA PHASE-------------------------#
 t_ed = np.logspace(0.1,np.log10(t_st0),1000)
 tstar_ed = t_ed/tch
-vstar_ed = 0.606*tstar_ed**(-(3.0/7.0))
+vstar_ed = 0.606*tstar_ed**((3.0/7.0))
 rstar_ed = 1.06*tstar_ed**(4.0/7.0)
 v_ed = vstar_ed*vch  #in km/s
 r_ed = rstar_ed*rch  #in parsecs
@@ -101,6 +101,7 @@ ss11 = (4.0/3.0)*ff*rr1
 nu11 = 2.0*cl*((ss11*c6*n_0)**(2.0/(pp+4.0)))*(bb1**((pp+2.0)/(pp+4.0)))
 ss1 = (c5/c6)*(bb1**(-0.5))*((nu11/(2.0*cl))**2.5)
 jj1 = ((nu/nu11)**2.5)*(1.0-np.exp(-1.0*(nu/nu11)**(-1.0*(pp+4.0)/2.0)))
+np.savetxt('jj1values_ed.txt',jj1)
 f_nu1 = (ss1*jj1*mt.pi*rr1**2)/(1.0e-26*dist**2)
 lluni = f_nu1*1.0e-26*4.0*mt.pi*dist**2
 #----------------------------------------------------------------------------------------------#
@@ -113,6 +114,7 @@ rr = r_st*(3.086e18) #LAURA - cm
 vv = v_st*1.0e5 #LAURA - cm/s
 bb0 = np.sqrt(8.0*mt.pi*epsb*ismrho*vv*vv)
 bb = np.sqrt(8.0*mt.pi*epsb*ismrho*vv*vv)
+
 goat = np.where(bb<(4.0*bism))
 ngoat = goat[0].size
 if ngoat>0.0:
@@ -134,14 +136,17 @@ ss1 = (4.0/3.0)*ff*rr
 nu1 = 2.0*cl*((ss1*c6*n_0)**(2.0/(pp+4.0)))*(bb**((pp+2.0)/(pp+4.0)))
 ss = (c5/c6)*(bb**(-0.5))*((nu1/(2.0*cl))**2.5)
 jj = ((nu/nu1)**2.5)*(1.0-np.exp(-1.0*(nu/nu1)**(-1.0*(pp+4.0)/2.0)))
+print np.count_nonzero(jj)
+np.savetxt('jjvalues_ed.txt',jj)
+#jj = ((nu/nu1)**2.5)*((nu/nu1)**(-1.0*(pp+4.0)/2.0))  #Taking the limit when nu/nu1 is very big. (e^x = 1+x)
 f_nu = (ss*jj*mt.pi*rr**2)/(1.0e-26*dist**2)
 lluni2 = f_nu*1.0e-26*4.0*mt.pi*dist**2
-
 #End of ST phase.        
-vrad = 188*((e51/(n0*n0))**(0.07))
+vrad = 200.0
 goat = np.where(v_st<=vrad)
 lluni2[goat]=0.0
-print 'v_rad = ',vrad,' km/s'
+#print np.count_nonzero(lluni2)
+#print 'v_rad = ',vrad,' km/s'
 print 'numerical trad = ',(10**t_st)[goat[0]][0],' years'
 print 'theoretical trad = ',(49300*(e51**0.22)*(n0**(-0.55))),' years'
 
@@ -152,13 +157,13 @@ tim=np.concatenate([t_ed,10**t_st])
 rad=np.concatenate([r_ed,r_st])
 
 
-np.savetxt('trumck_snrlumrad_ia_tim.txt',tim)
-np.savetxt('trumck_snrlumrad_ia_lum.txt',lum)
-np.savetxt('trumck_snrlumrad_ia_rad.txt',rad)
-np.savetxt('trumck_snrlumrad_ia_ted.txt',t_ed)
-np.savetxt('trumck_snrlumrad_ia_ved.txt',v_ed)
-np.savetxt('trumck_snrlumrad_ia_tst.txt',10**t_st)
-np.savetxt('trumck_snrlumrad_ia_vst.txt',v_st)
+#np.savetxt('trumck_snrlumrad_ia_tim.txt',tim)
+#np.savetxt('trumck_snrlumrad_ia_lum.txt',lum)
+#np.savetxt('trumck_snrlumrad_ia_rad.txt',rad)
+#np.savetxt('trumck_snrlumrad_ia_ted.txt',t_ed)
+#np.savetxt('trumck_snrlumrad_ia_ved.txt',v_ed)
+#np.savetxt('trumck_snrlumrad_ia_tst.txt',10**t_st)
+#np.savetxt('trumck_snrlumrad_ia_vst.txt',v_st)
 
 
 
@@ -175,8 +180,8 @@ ax.set_xlim(100,1.0e6)
 ax.set_ylim(1.0e19,1.0e26)
 #ax.axis([10.0,1.0e5,1.0e18,1.0e24])
 ax.legend()
-np.savetxt('snrlum_e51_05.txt',lum)
-np.savetxt('snrtim_e51_05.txt',tim)
+#np.savetxt('snrlum_e51_05.txt',lum)
+#np.savetxt('snrtim_e51_05.txt',tim)
 
 
 
