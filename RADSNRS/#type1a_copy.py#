@@ -1,0 +1,51 @@
+#-----------------------------------------------------------#
+# This will be the most optimized, robust, efficient version
+# of the driver program.
+#-----------------------------------------------------------#
+
+import numpy as np
+import matplotlib.pyplot as py
+import scipy.interpolate as interp
+import scipy.integrate as integ
+import trumck
+import ismdensgen as dgen
+import time as tm
+import datetime as dt
+import os
+
+
+a = 1.4
+h1_1a = dgen.type1a_densities()
+h1_cc = dgen.ccsn_densities(a)
+mass_1a = dgen.superMass
+dgen.densityplots(h1_1a,h1_cc)
+
+thick_array = np.array([100.0])
+frac_array = np.array([0.8])
+ratelmc = np.array([4.0e-3])
+xx=0
+likelihood = np.zeros(thick_array.size*frac_array.size)
+
+for j in range(thick_array.size):
+    for i in range(frac_array.size):
+        start = tm.time()
+        frac = frac_array[i]
+
+        rate_1a_lmc = (frac/(1+frac))*ratelmc[0]
+        rate_cc_lmc = (1/(1+frac))*ratelmc[0]
+        
+        time_1a = dgen.timegen(rate_1a_lmc)
+        time_cc = dgen.timegen(rate_cc_lmc)
+   
+        time,h1,ejmas,energ,nprof = dgen.create_snarray(time_1a,time_cc)
+        
+        likelihood[xx] = trumck.radiolightcurve(thick_array[j],h1,time,ejmas,energ,nprof)
+        
+        print likelihood[xx],'\t','RUNTIME: ',dt.timedelta(seconds=tm.time()-start)
+        xx=xx+1
+
+#userdoc = os.path.join(os.getcwd(),'DataAnalysis')                                                                                                      
+#np.savetxt(os.path.join(userdoc,'checksnaps_easier_likelihood.txt'),likelihood)
+#np.savetxt(os.path.join(userdoc,'checksnaps_easier_thickness.txt'),thick_array)
+#np.savetxt(os.path.join(userdoc,'checksnaps_easier_fraction.txt'),frac_array)
+#np.savetxt(os.path.join(userdoc,'checksnaps_easier_snrate.txt'),ratelmc)
