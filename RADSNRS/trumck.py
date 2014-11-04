@@ -212,9 +212,6 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
     for ind,lums in enumerate(histlum_array):
         lums = lums[np.nonzero(lums)]
         n2[ind], bins2 = np.histogram(lums,bins=obs_bins)
-    
-
-        
 #CALCULATING LIKELIHOOD
     avg_n = np.mean(n2,axis=0)/15.0
     likhood_temp = np.array([poissonProb(n[ind],avg_n[ind]) for ind in range(n.size)])
