@@ -56,8 +56,9 @@ def randomnh(rho_col,z0):
     n_z = (rho_col/(pc*z0*np.sqrt(3.14)))*np.exp(-(z**2)/(z0**2))
     return n_z
 
-def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
-    #thick_lim = 5*(lmcthick/pc)*0.5
+def radiolightcurve(lmcthick,epsb,nh,tborn,ejmas,energ,nprof):
+
+#thick_lim = 5*(lmcthick/pc)*0.5
     tsnap_array = np.array([2.0e6])
     histlum_array = np.zeros((tsnap_array.size,6000))
     diam_array = np.zeros_like(histlum_array)
@@ -65,9 +66,9 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
     prof_array = np.zeros_like(histlum_array)
         
 #Declaring constants for Luminosity Calculation
-    epsb = 0.01
-    alpha = 1.0 
-    epse = epsb*alpha
+ #   epsb = 0.01
+    alpha = 1.0
+    epse = 0.1
     pp = 2.5
     compf = 4.0
     ff = 0.38
@@ -99,12 +100,13 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
             lluni2 = 0.0
             mu=1.4
             n0 = randomnh(nh[i],lmcthick) #dimensionless, multiplied by 1cm^3
+            #print n0,nh[i],lmcthick
             mp = 1.67e-24
             ismrho = n0*mu*mp #in units of cm^-3
             e51 = energ[i] #in units of 10^51 ergs of energy released per sne
             mej = ejmas[i] #in units of solar masses
             if n0==0.0:
-                print n0, nh[i]
+                print 'n0 = 0! alert!'
 #Characteristic scales
             tch = 423*(e51**(-0.5))*(mej**(5.0/6.0))*(n0**(-1.0/3.0)) #years
             rch = 3.07*(mej**(1.0/3.0))*(n0**(-1.0/3.0)) #pcs
@@ -155,8 +157,7 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
             c = 3.0e10
             gammam = (mu*epse*(pp-2)*((vv1/c)**2)*mp)/((pp-1)*compf*nei*me)
             if gammam<1.0:
-                gammam=1.0
-   
+                gammam=1.0   
             elow = gammam*me*c**2  #Eq. 10 Chevalier, 98                                                                                                                       
             n0 = (alpha*(bb0**2)*(pp-2)*(elow**(pp-2.0)))/(8.0*mt.pi)
             ss11 = (4.0/3.0)*ff*rr1
@@ -169,8 +170,8 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
             if (lluni<=9.0e22):
                 lluni=0.0
                 r_ed=0.0
-                nh[i]=0.0
-                nprof[i] = 0.0
+               # nh[i]=0.0
+               # nprof[i] = 0.0
         
             lum[i]=lluni
             tim[i]=t_ed
@@ -198,10 +199,10 @@ def radiolightcurve(lmcthick,nh,tborn,ejmas,energ,nprof):
 
 #Saving stuff to the IpythonStuff folder for analysis    
     userdoc = os.path.join(os.getcwd(),'DataAnalysis')    
-    np.savetxt(os.path.join(userdoc,'paramtst_lumhist.txt'),histlum_array)
-    np.savetxt(os.path.join(userdoc,'paramtst_diamhist.txt'),diam_array)
-    np.savetxt(os.path.join(userdoc,'paramtst_denshist.txt'),dens_array)
-    np.savetxt(os.path.join(userdoc,'paramtst_profhist.txt'),prof_array)
+    np.savetxt(os.path.join(userdoc,'epsb_lumhist.txt'),histlum_array)
+    np.savetxt(os.path.join(userdoc,'epsb_diamhist.txt'),diam_array)
+    np.savetxt(os.path.join(userdoc,'epsb_denshist.txt'),dens_array)
+    np.savetxt(os.path.join(userdoc,'epsb_profhist.txt'),prof_array)
         
 #LIKELIHOOD - LUMINOSITY
     
